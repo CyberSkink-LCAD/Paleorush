@@ -1,106 +1,169 @@
-using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
-
-
-
+using System;
+using System.Collections;
+using UnityEngine.InputSystem;
 
 public class ThirdPersonController : MonoBehaviour
 {
-    private Animator animator;
-    [SerializeField] private CharacterController controller;
-    [SerializeField] private Transform cam;
-    [SerializeField] private float startSpeed = 6f;
-    [SerializeField] private float speed = 6f;
-    [SerializeField] private float speedMult = 2f;
-    [SerializeField] private float turnSmoothTime = 0.1f;
-    [SerializeField] private float turnSmoothVelocity;
-    [SerializeField] private float gravity = 9.81f;
-    //9.81f for realistic gravity?
-    [SerializeField] Vector3 velocity;
-    [SerializeField] public Transform groundCheck;
-    [SerializeField] public float groundDistance = 0.4f;
-    [SerializeField] public float jumpHeight = 3f;
-    [SerializeField] public LayerMask groundMask;
-    [SerializeField] public bool isGrounded;
-    [SerializeField] private bool triggerDizzy;
+    private const string speedParamName = "Speed";
+    private const string jumpParamName = "Jump";
+    private const string groundedParamName = "Grounded";
+    private const string fallingParamName = "Falling";
+    private const float lookThreshold = 0.01f;
+    [Header("Cinemachine")]
     [SerializeField]
-    private float fallTime;
+    private Transform cameraTarget;
+    [Header("Grounded")]
+    [SerializeField]
+    private Transform groundedCheckPoint;
+    [Header("Jump")]
+    [SerializeField]
+    private float jumpStrength = 7f;
+    [Header("Speed")]
+    [SerializeField]
+    private float movementSpeed = 3f;
+    [SerializeField]
+    private float lookSpeed = 10f;
+    [SerializeField]
+    private float topClamp = 70f;
+    [SerializeField]
+    private float bottomClamp = -30f;
+    [SerializeField]
+    private float jumpDowntime = 1f;
+    private Vector2 move;
+    private Vector2 look;
+    private bool isRunning;
+    [SerializeField]
+    private float groundCheckRadius = 0.2f;
+    [SerializeField]
+    private LayerMask groundLayer;
+    private bool isGrounded = true;
+    private Rigidbody body;
+    private Animator animator;
+    private bool canJump = true;
+    private float yaw;
+    private float pitch;
+    private float currentSpeed;
 
-{
-    if (Input.GetKey("left shift"))
+    private void Move()
     {
-        speed = startSpeed * speedMult;
-        animator.SetBool("isSprinting", true);
-    }
-    else
-    {
-        speed = startSpeed;
-        animator.SetBool("isSprinting", false);
-    }
-    isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
-    if (isGrounded)
-    {
-        animator.SetBool("isGrounded", true);
-    }
-    else
-    {
-        animator.SetBool("isGrounded", false);
-    }
-
-    if (isGrounded && velocity.y < 0)
-    {
-        velocity.y = -2f;
-        fallTime = 0f;
-    }
-    if (!isGrounded && fallTime > 2f && velocity.y < -0.1f)
-    {
-        animator.SetBool("fellFromHeight", true);
+        float targetSpeed = (isRunning ? movementSpeed * 2f : movementSpeed) * move.magnitude;
+        currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, Time.fixedDeltaTime * 8f);
+        Vector3 forward = cameraTarget.forward;
+        Vector3 right = cameraTarget.right;
+        forward.y = 0f;
+        right.y = 0f;
+        forward.Normalize();
+        right.Normalize();
+        Vector3 moveDirection = (forward * move.y + right * move.x).normalized;
+        if (moveDirection.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * 10f);
+            Vector3 currentVelocity = body.linearVelocity;
+            body.linearVelocity = new Vector3(moveDirection.x * currentSpeed, currentVelocity.y, moveDirection.z * currentSpeed);
+        }
+        else
+        {
+            Vector3 currentVelocity = body.linearVelocity;
+            body.linearVelocity = new Vector3(0, currentVelocity.y, 0);
+        }
+        float normalizedAnimSpeed = currentSpeed / (movementSpeed * 2f);
+        animator.SetFloat(speedParamName, normalizedAnimSpeed);
+        animator.SetBool(fallingParamName, !isGrounded && body.linearVelocity.y < -0.01f);
 
     }
-
-
-    if (Input.GetButtonDown("Jump") && isGrounded && !triggerDizzy)
+    private void Awake()
     {
-        velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        animator.SetBool("isJumping", true);
+        body = GetComponent<Rigidbody>();
+        animator = GetComponentInChildren<Animator>();
     }
-    else
+    void Update()
     {
-        animator.SetBool("isJumping", false);
-    }
-    fallTime = fallTime += Time.deltaTime;
-    velocity.y += gravity * Time.deltaTime;
-    controller.Move(velocity * Time.deltaTime);
-    float horizontal = Input.GetAxisRaw("Horizontal");
-    float vertical = Input.GetAxisRaw("Vertical");
-    Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
-    if (animator.GetCurrentAnimatorStateInfo(0).IsName("FACEPLANT") || animator.GetCurrentAnimatorStateInfo(0).IsName("DIZZY"))
-    {
-        triggerDizzy = true;
-        animator.SetBool("fellFromHeight", false);
-    }
-    else
-    {
-        triggerDizzy = false;
+        GroundedCheck();
     }
 
-    if (direction.magnitude >= 0.1f && !triggerDizzy)
+    void LateUpdate()
     {
-        float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
-        float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-        transform.rotation = Quaternion.Euler(0f, angle, 0f);
-        Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-        controller.Move(moveDir.normalized * speed * Time.deltaTime);
+        Look();
     }
-    if (isGrounded && direction.magnitude >= 0.1f)
+
+    void FixedUpdate()
     {
-        animator.SetBool("isWalking", true);
+        Move();
     }
-    else
+
+    private void Jump()
     {
-        animator.SetBool("isWalking", false);
+        if (!isGrounded || !canJump)
+        {
+            return;
+        }
+        body.AddForce(Vector3.up * jumpStrength, ForceMode.Impulse);
+        canJump = false;
+        animator.SetTrigger(jumpParamName);
+        StartCoroutine(JumpDowntimeCoroutine());
+    }
+    private IEnumerator JumpDowntimeCoroutine()
+    { 
+    yield return new WaitForSeconds(0.25f);
+        var waitForGrounded = new WaitUntil(() => isGrounded);
+        yield return waitForGrounded;
+        yield return new WaitForSeconds(jumpDowntime);
+        canJump = true;
+    }
+    private void OnMove(InputValue inputValue)
+    {
+        move = inputValue.Get<Vector2>();
+    }
+    private void OnDrawGizmosSelected()
+    {
+        if(groundedCheckPoint == null)
+        {
+            return;
+        }
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawSphere(groundedCheckPoint.position, groundCheckRadius);
+    }
+    private void OnJump()
+    {
+        Jump();
+    }
+    private void Look()
+    {
+        if (look.sqrMagnitude >= lookThreshold)
+        { 
+        float deltaTimeMultiplier = Time.deltaTime * lookSpeed;
+            yaw += look.x * deltaTimeMultiplier;
+            pitch -= look.y * deltaTimeMultiplier;
+        }
+        yaw = ClampAngle(yaw, float.MinValue, float.MaxValue);
+        pitch = ClampAngle(pitch, bottomClamp, topClamp);
+        cameraTarget.transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+    }
+    private float ClampAngle(float lfAngle, float lfMin, float lfMax)
+    { 
+    if(lfAngle < -360f)
+        {
+            lfAngle += 360;
+        }
+        if (lfAngle > 360f)
+        {
+            lfAngle -= 360f;
+        }
+        return Mathf.Clamp(lfAngle, lfMin, lfMax);
+    }
+    private void GroundedCheck()
+    {
+        isGrounded = Physics.CheckSphere(groundedCheckPoint.position, groundCheckRadius, groundLayer);
+        animator.SetBool(groundedParamName, isGrounded);
+    }
+    private void OnRun(InputValue inputValue)
+    {
+        isRunning = inputValue.isPressed;
+    }
+    private void OnLook(InputValue inputValue)
+    {
+        look = inputValue.Get<Vector2>();
     }
 }
-
-
