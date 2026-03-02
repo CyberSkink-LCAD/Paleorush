@@ -62,7 +62,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: b37440264635d6f43a5d1302343a88bc, type: 3}
       propertyPath: m_Name
-      value: Fossil3 (1)
+      value: Fossil_C1
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: b37440264635d6f43a5d1302343a88bc, type: 3}
       propertyPath: m_Layer
@@ -81,7 +81,7 @@ PrefabInstance:
       addedObject: {fileID: 3709849368104898803}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: b37440264635d6f43a5d1302343a88bc, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3024968598083945994}
+      addedObject: {fileID: 584257257481783343}
   m_SourcePrefab: {fileID: 100100000, guid: b37440264635d6f43a5d1302343a88bc, type: 3}
 --- !u!1 &7362767997767717213 stripped
 GameObject:
@@ -109,7 +109,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.10826925, y: 0.13414946, z: 0.24800198}
   m_Center: {x: -0.00017270444, y: 0.031598415, z: 0.013571321}
---- !u!114 &3024968598083945994
+--- !u!114 &584257257481783343
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

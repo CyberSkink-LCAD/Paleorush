@@ -52,4 +52,15 @@ public class CollectibleManager : MonoBehaviour
             return collectibles[type];
         return 0;
     }
+    public void ResetCollectibles()
+    {
+        foreach (CollectibleType type in
+        System.Enum.GetValues(typeof(CollectibleType)))
+        {
+            collectibles[type] = 0;
+        }
+        // Notify UI to refresh
+        CollectibleEventSystem.RaiseCollectiblesUpdated();
+        Debug.Log("Collectibles reset.");
+    }
 }

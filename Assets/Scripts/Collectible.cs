@@ -4,8 +4,8 @@ public class Collectible : MonoBehaviour
     [SerializeField] float rotateSpeed = 1;
     public enum CollectibleType
     {
-        Coin,
-        Gem
+        mammal,
+        dinosaur
     }
     [SerializeField] CollectibleType type;
     [SerializeField] int amount = 1;

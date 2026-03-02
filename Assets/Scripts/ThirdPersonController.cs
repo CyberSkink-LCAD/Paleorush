@@ -32,7 +32,7 @@ public class ThirdPersonController : MonoBehaviour
     private float jumpDowntime = 1f;
     private Vector2 move;
     private Vector2 look;
-    private bool isRunning;
+    [SerializeField] private bool isRunning;
     [SerializeField]
     private float groundCheckRadius = 0.2f;
     [SerializeField]
@@ -43,7 +43,7 @@ public class ThirdPersonController : MonoBehaviour
     private bool canJump = true;
     private float yaw;
     private float pitch;
-    private float currentSpeed;
+    [SerializeField] private float currentSpeed;
 
     private void Move()
     {

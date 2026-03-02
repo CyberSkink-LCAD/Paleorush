@@ -66,7 +66,7 @@ PrefabInstance:
       objectReference: {fileID: -265882674395027020, guid: d0a0ae0b106734b4f86edec68d792498, type: 3}
     - target: {fileID: 919132149155446097, guid: b37440264635d6f43a5d1302343a88bc, type: 3}
       propertyPath: m_Name
-      value: Fossil3 (3)
+      value: Fossil_C3
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: b37440264635d6f43a5d1302343a88bc, type: 3}
       propertyPath: m_Layer
@@ -126,5 +126,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Collectible
   rotateSpeed: 1
-  type: 0
+  type: 1
   amount: 1

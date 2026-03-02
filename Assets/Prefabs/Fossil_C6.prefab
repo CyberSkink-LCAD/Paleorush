@@ -126,5 +126,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Collectible
   rotateSpeed: 1
-  type: 0
+  type: 1
   amount: 1

@@ -5,8 +5,8 @@ using static Collectible;
 public class UICollectiblesDisplay : MonoBehaviour
 {
     [Header("UI References")]
-    [SerializeField] private TMP_Text coinsText;
-    [SerializeField] private TMP_Text gemsText;
+    [SerializeField] private TMP_Text mammalText;
+    [SerializeField] private TMP_Text dinosaurText;
     private void OnEnable()
     { 
         CollectibleEventSystem.OnCollectiblesUpdated += UpdateUI; 
@@ -23,11 +23,11 @@ public class UICollectiblesDisplay : MonoBehaviour
         {
         if (CollectibleManager.Instance == null)
             return;
-             int coins = CollectibleManager.Instance.GetAmount(CollectibleType.Coin);
+             int mammal = CollectibleManager.Instance.GetAmount(CollectibleType.mammal);
             
-            int gems = CollectibleManager.Instance.GetAmount(CollectibleType.Gem);
-            coinsText.text = $"Coins: {coins}";
-            gemsText.text = $"Gems: {gems}";
+            int dinosaur = CollectibleManager.Instance.GetAmount(CollectibleType.dinosaur);
+            mammalText.text = $"Mammal: {mammal}";
+            dinosaurText.text = $"Dinosaur: {dinosaur}";
         }
     }
 
